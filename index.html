@@ -18,18 +18,40 @@ h1 {
   margin-bottom: 10px;
 }
 
+/* ===== CONTROLS ===== */
 .controls {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 14px;
+  align-items: center;
 }
 
-input, select {
-  padding: 8px;
+input, select, button {
+  padding: 8px 10px;
   font-size: 14px;
 }
 
+button {
+  cursor: pointer;
+  border: none;
+  background: #444;
+  color: #fff;
+  border-radius: 4px;
+}
+button:hover {
+  background: #000;
+}
+
+#backBtn {
+  display: none;
+  background: #1976d2;
+}
+#backBtn:hover {
+  background: #0d47a1;
+}
+
+/* ===== TABLE ===== */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -40,48 +62,80 @@ th, td {
   border: 1px solid #ddd;
   padding: 6px;
   font-size: 13px;
-  text-align: left;
   white-space: nowrap;
 }
 
 th {
-  background: #e9ecef;
   position: sticky;
   top: 0;
   z-index: 3;
 }
 
-/* Sticky rank + name */
+/* Sticky columns */
 .sticky {
   position: sticky;
   left: 0;
-  background: #fff;
   z-index: 2;
 }
 .sticky.name {
   left: 40px;
 }
 
-/* Column groups */
-.meta { background: #ffffff; }
-.trait { background: #f7fbff; }
-.style { background: #fff7f7; }
+/* ===== COLOR GROUPS ===== */
 
-/* Bars */
+/* Rank + Name */
+.meta {
+  background: #ffffff;
+}
+
+/* Confidence / Reputation / Gravity */
+.stats {
+  background: #e3f2fd;
+}
+
+/* Role / Archetype */
+.identity {
+  background: #ede7f6;
+}
+
+/* Traits */
+.trait {
+  background: #e8f5e9;
+}
+
+/* Modifiers */
+.style {
+  background: #fce4ec;
+}
+
+/* Troll */
+.troll {
+  background: #ffebee;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* ===== BARS ===== */
 .bar {
   height: 8px;
-  background: #ddd;
+  background: #ccc;
   border-radius: 4px;
   overflow: hidden;
+  margin-bottom: 2;
 }
-.fill {
+
+.fill-trait {
   height: 100%;
-  background: linear-gradient(90deg,#4caf50,#81c784);
+  background: linear-gradient(90deg,#43a047,#81c784);
+}
+
+.fill-style {
+  height: 100%;
+  background: linear-gradient(90deg,#d81b60,#f48fb1);
 }
 
 .bad {
   color: #b00020;
-  font-weight: bold;
 }
 </style>
 </head>
@@ -92,20 +146,21 @@ th {
 
 <div class="controls">
   <input id="search" placeholder="Search avatar name…">
+
   <select id="mode">
     <option value="overall">Overall</option>
-
     <option value="engaging">Most Engaging</option>
     <option value="curious">Most Curious</option>
     <option value="humorous">Funniest</option>
     <option value="supportive">Most Supportive</option>
     <option value="dominant">Most Dominant</option>
     <option value="combative">Most Combative</option>
-
     <option value="flirty">Most Flirty</option>
     <option value="sexual">Most Sexual</option>
     <option value="curse">Most Profane</option>
   </select>
+
+  <button id="backBtn">⬅ Back to Main</button>
 </div>
 
 <table>
@@ -114,11 +169,12 @@ th {
   <th class="sticky meta">#</th>
   <th class="sticky name meta">Name</th>
 
-  <th class="meta">Confidence</th>
-  <th class="meta">Reputation</th>
-  <th class="meta">Gravity</th>
-  <th class="meta">Role</th>
-  <th class="meta">Archetype</th>
+  <th class="stats">Confidence</th>
+  <th class="stats">Reputation</th>
+  <th class="stats">Gravity</th>
+
+  <th class="identity">Role</th>
+  <th class="identity">Archetype</th>
 
   <th class="trait">Engaging</th>
   <th class="trait">Curious</th>
@@ -131,7 +187,7 @@ th {
   <th class="style">Sexual</th>
   <th class="style">Curse</th>
 
-  <th class="meta">Troll</th>
+  <th class="troll">Troll</th>
 </tr>
 </thead>
 
@@ -153,13 +209,17 @@ fetch(API)
 
 document.getElementById("search").addEventListener("input", applyFilters);
 document.getElementById("mode").addEventListener("change", applyFilters);
+document.getElementById("backBtn").addEventListener("click", () => {
+  document.getElementById("mode").value = "overall";
+  document.getElementById("search").value = "";
+  renderOverall();
+});
 
-function bar(v=0) {
+function bar(v=0, cls="fill-trait") {
   return `
     <div class="bar">
-      <div class="fill" style="width:${v}%"></div>
-    </div>
-  `;
+      <div class="${cls}" style="width:${v}%"></div>
+    </div>`;
 }
 
 function applyFilters() {
@@ -178,13 +238,14 @@ function applyFilters() {
 function renderOverall(list = DATA) {
   document.getElementById("title").innerText =
     "🏆 SL Social Experiment Leaderboard";
-
+  document.getElementById("backBtn").style.display = "none";
   render(list);
 }
 
 function rankByTrait(list, trait) {
   document.getElementById("title").innerText =
     "🏆 " + document.querySelector(`#mode option[value="${trait}"]`).text;
+  document.getElementById("backBtn").style.display = "inline-block";
 
   let filtered = list.filter(p =>
     (p.traits?.[trait] || p.styles?.[trait]) > 0
@@ -213,11 +274,12 @@ function render(list) {
   <td class="sticky meta">${p.rank}</td>
   <td class="sticky name meta">${p.name}</td>
 
-  <td class="meta">${p.confidence}%</td>
-  <td class="meta">${p.reputation}%</td>
-  <td class="meta">${p.gravity}%</td>
-  <td class="meta">${p.role}</td>
-  <td class="meta">${p.archetype}</td>
+  <td class="stats">${p.confidence}%</td>
+  <td class="stats">${p.reputation}%</td>
+  <td class="stats">${p.gravity}%</td>
+
+  <td class="identity">${p.role}</td>
+  <td class="identity">${p.archetype}</td>
 
   <td class="trait">${bar(t.engaging)} ${t.engaging||0}%</td>
   <td class="trait">${bar(t.curious)} ${t.curious||0}%</td>
@@ -226,11 +288,11 @@ function render(list) {
   <td class="trait">${bar(t.dominant)} ${t.dominant||0}%</td>
   <td class="trait">${bar(t.combative)} ${t.combative||0}%</td>
 
-  <td class="style">${bar(s.flirty)} ${s.flirty||0}%</td>
-  <td class="style">${bar(s.sexual)} ${s.sexual||0}%</td>
-  <td class="style">${bar(s.curse)} ${s.curse||0}%</td>
+  <td class="style">${bar(s.flirty,"fill-style")} ${s.flirty||0}%</td>
+  <td class="style">${bar(s.sexual,"fill-style")} ${s.sexual||0}%</td>
+  <td class="style">${bar(s.curse,"fill-style")} ${s.curse||0}%</td>
 
-  <td class="meta ${p.troll ? "bad" : ""}">
+  <td class="troll ${p.troll ? "bad" : ""}">
     ${p.troll ? "⚠️" : ""}
   </td>
 </tr>`;
