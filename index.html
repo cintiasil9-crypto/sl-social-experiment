@@ -9,26 +9,26 @@
 body {
   font-family: Arial, sans-serif;
   background: #f4f6f8;
-  margin: 0;
   padding: 20px;
 }
 
+/* ===== HEAD ===== */
 h1 {
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 /* ===== CONTROLS ===== */
-.controls {
+.controls, .lens {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   align-items: center;
 }
 
 input, select, button {
-  padding: 8px 10px;
+  padding: 7px 10px;
   font-size: 14px;
 }
 
@@ -39,17 +39,17 @@ button {
   color: #fff;
   border-radius: 4px;
 }
-button:hover {
-  background: #000;
+button:hover { background:#000; }
+
+.lens button {
+  background:#607d8b;
+}
+.lens button:hover {
+  background:#37474f;
 }
 
-#backBtn {
-  display: none;
-  background: #1976d2;
-}
-#backBtn:hover {
-  background: #0d47a1;
-}
+#backBtn { display:none; background:#1976d2; }
+#compareToggle { background:#6a1b9a; }
 
 /* ===== TABLE ===== */
 table {
@@ -72,71 +72,37 @@ th {
 }
 
 /* Sticky columns */
-.sticky {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-}
-.sticky.name {
-  left: 40px;
-}
+.sticky { position: sticky; background:#fff; z-index:2; }
+.sticky.rank { left:0; }
+.sticky.name { left:40px; }
+.sticky.role { left:240px; }
 
-/* ===== COLOR GROUPS ===== */
+/* Column groups */
+.stats { background:#e3f2fd; }
+.identity { background:#ede7f6; cursor:pointer; }
+.trait { background:#e8f5e9; }
+.style { background:#fce4ec; }
+.troll { background:#ffebee; text-align:center; }
 
-/* Rank + Name */
-.meta {
-  background: #ffffff;
-}
-
-/* Confidence / Reputation / Gravity */
-.stats {
-  background: #e3f2fd;
-}
-
-/* Role / Archetype */
-.identity {
-  background: #ede7f6;
-}
-
-/* Traits */
-.trait {
-  background: #e8f5e9;
-}
-
-/* Modifiers */
-.style {
-  background: #fce4ec;
-}
-
-/* Troll */
-.troll {
-  background: #ffebee;
-  font-weight: bold;
-  text-align: center;
-}
-
-/* ===== BARS ===== */
+/* Bars */
 .bar {
   height: 8px;
   background: #ccc;
   border-radius: 4px;
   overflow: hidden;
-  margin-bottom: 2;
 }
-
 .fill-trait {
-  height: 100%;
+  height:100%;
   background: linear-gradient(90deg,#43a047,#81c784);
 }
-
 .fill-style {
-  height: 100%;
+  height:100%;
   background: linear-gradient(90deg,#d81b60,#f48fb1);
 }
 
-.bad {
-  color: #b00020;
-}
+/* States */
+.forming { opacity:0.75; font-style:italic; }
+.selected { outline: 3px solid #ff9800; }
 </style>
 </head>
 
@@ -145,36 +111,45 @@ th {
 <h1 id="title">🏆 SL Social Experiment Leaderboard</h1>
 
 <div class="controls">
-  <input id="search" placeholder="Search avatar name…">
-
+  <input id="search" placeholder="Search avatar…">
   <select id="mode">
     <option value="overall">Overall</option>
-    <option value="engaging">Most Engaging</option>
-    <option value="curious">Most Curious</option>
-    <option value="humorous">Funniest</option>
-    <option value="supportive">Most Supportive</option>
-    <option value="dominant">Most Dominant</option>
-    <option value="combative">Most Combative</option>
-    <option value="flirty">Most Flirty</option>
-    <option value="sexual">Most Sexual</option>
-    <option value="curse">Most Profane</option>
+    <option value="engaging">Engaging</option>
+    <option value="curious">Curious</option>
+    <option value="humorous">Humorous</option>
+    <option value="supportive">Supportive</option>
+    <option value="dominant">Dominant</option>
+    <option value="combative">Combative</option>
+    <option value="flirty">Flirty</option>
+    <option value="sexual">Sexual</option>
+    <option value="curse">Curse</option>
   </select>
 
-  <button id="backBtn">⬅ Back to Main</button>
+  <button id="backBtn">⬅ Back</button>
+  <button id="compareToggle">Compare</button>
+</div>
+
+<div class="lens">
+  <button onclick="setMode('overall')">Overall</button>
+  <button onclick="setMode('engaging')">Engaging</button>
+  <button onclick="setMode('supportive')">Supportive</button>
+  <button onclick="setMode('dominant')">Dominant</button>
+  <button onclick="setMode('flirty')">Flirty</button>
+  <button onclick="setMode('troll')">Troll Watch</button>
 </div>
 
 <table>
 <thead>
 <tr>
-  <th class="sticky meta">#</th>
-  <th class="sticky name meta">Name</th>
+  <th class="sticky rank" title="Leaderboard rank">#</th>
+  <th class="sticky name" title="Avatar name">Name</th>
 
-  <th class="stats">Confidence</th>
-  <th class="stats">Reputation</th>
-  <th class="stats">Gravity</th>
+  <th class="stats" title="How much data we have">Confidence</th>
+  <th class="stats" title="Net positive social signal">Reputation</th>
+  <th class="stats" title="How much others respond to you">Gravity</th>
 
-  <th class="identity">Role</th>
-  <th class="identity">Archetype</th>
+  <th class="sticky role identity" title="Participation style">Role</th>
+  <th class="identity" title="Dominant social pattern">Archetype</th>
 
   <th class="trait">Engaging</th>
   <th class="trait">Curious</th>
@@ -187,116 +162,95 @@ th {
   <th class="style">Sexual</th>
   <th class="style">Curse</th>
 
-  <th class="troll">Troll</th>
+  <th class="troll" title="Disruptive behavior pattern">Troll</th>
 </tr>
 </thead>
-
-<tbody id="rows">
-<tr><td colspan="18">Loading…</td></tr>
-</tbody>
+<tbody id="rows"></tbody>
 </table>
 
 <script>
 const API = "https://sl-gpt-relay.onrender.com/leaderboard";
-let DATA = [];
+let DATA=[], MODE="overall", COMPARE=false, SELECTED=new Set();
 
-fetch(API)
-  .then(r => r.json())
-  .then(json => {
-    DATA = json;
-    renderOverall();
-  });
+fetch(API).then(r=>r.json()).then(d=>{DATA=d; render();});
 
-document.getElementById("search").addEventListener("input", applyFilters);
-document.getElementById("mode").addEventListener("change", applyFilters);
-document.getElementById("backBtn").addEventListener("click", () => {
-  document.getElementById("mode").value = "overall";
-  document.getElementById("search").value = "";
-  renderOverall();
-});
+search.oninput = render;
+mode.onchange = e=>setMode(e.target.value);
+backBtn.onclick = ()=>setMode("overall");
+compareToggle.onclick = ()=>{COMPARE=!COMPARE; render();};
 
-function bar(v=0, cls="fill-trait") {
-  return `
-    <div class="bar">
-      <div class="${cls}" style="width:${v}%"></div>
-    </div>`;
+function setMode(m){
+  MODE=m;
+  mode.value=m;
+  backBtn.style.display = m==="overall"?"none":"inline-block";
+  title.innerText = m==="overall" ? "🏆 SL Social Experiment Leaderboard" : "🏆 "+m.toUpperCase();
+  render();
 }
 
-function applyFilters() {
-  const q = document.getElementById("search").value.toLowerCase();
-  const mode = document.getElementById("mode").value;
+function bar(v,max,cls){
+  let pct = max? Math.round((v/max)*100):0;
+  return `<div class="bar"><div class="${cls}" style="width:${pct}%"></div></div>${pct}%`;
+}
 
-  let list = DATA.filter(p => p.name.toLowerCase().includes(q));
+function render(){
+  let q = search.value.toLowerCase();
+  let list = DATA.filter(p=>p.name.toLowerCase().includes(q));
 
-  if (mode === "overall") {
-    renderOverall(list);
+  if (MODE!=="overall" && MODE!=="troll"){
+    let max = Math.max(...list.map(p=>p.traits?.[MODE]||p.styles?.[MODE]||0),1);
+    list = list.filter(p=>(p.traits?.[MODE]||p.styles?.[MODE])>0)
+               .sort((a,b)=>(b.traits?.[MODE]||b.styles?.[MODE])-(a.traits?.[MODE]||a.styles?.[MODE]));
+    draw(list,max);
   } else {
-    rankByTrait(list, mode);
+    draw(list,0);
   }
 }
 
-function renderOverall(list = DATA) {
-  document.getElementById("title").innerText =
-    "🏆 SL Social Experiment Leaderboard";
-  document.getElementById("backBtn").style.display = "none";
-  render(list);
-}
+function draw(list,max){
+  rows.innerHTML="";
+  list.forEach((p,i)=>{
+    let t=p.traits||{}, s=p.styles||{};
+    let troll = p.troll_score||0;
+    let trollIcon = troll>0.7?"🔴":troll>0.4?"🟡":"🟢";
 
-function rankByTrait(list, trait) {
-  document.getElementById("title").innerText =
-    "🏆 " + document.querySelector(`#mode option[value="${trait}"]`).text;
-  document.getElementById("backBtn").style.display = "inline-block";
+    rows.innerHTML+=`
+<tr class="${p.archetype==="Profile forming"?"forming":""} ${SELECTED.has(p.name)?"selected":""}"
+onclick="${COMPARE?`toggleSelect('${p.name}')`:""}">
+<td class="sticky rank">${i+1}</td>
+<td class="sticky name">${p.name}</td>
 
-  let filtered = list.filter(p =>
-    (p.traits?.[trait] || p.styles?.[trait]) > 0
-  );
+<td class="stats">${p.confidence}%</td>
+<td class="stats">${p.reputation}%</td>
+<td class="stats">${p.gravity}%</td>
 
-  filtered.sort((a,b) => {
-    const av = a.traits?.[trait] ?? a.styles?.[trait] ?? 0;
-    const bv = b.traits?.[trait] ?? b.styles?.[trait] ?? 0;
-    return bv - av;
-  });
+<td class="sticky role identity">${p.role}</td>
+<td class="identity" onclick="filterArch('${p.archetype}')">${p.archetype}</td>
 
-  filtered = filtered.map((p,i)=>({...p, rank:i+1}));
-  render(filtered);
-}
+<td class="trait">${bar(t.engaging||0,max,"fill-trait")}</td>
+<td class="trait">${bar(t.curious||0,max,"fill-trait")}</td>
+<td class="trait">${bar(t.humorous||0,max,"fill-trait")}</td>
+<td class="trait">${bar(t.supportive||0,max,"fill-trait")}</td>
+<td class="trait">${bar(t.dominant||0,max,"fill-trait")}</td>
+<td class="trait">${bar(t.combative||0,max,"fill-trait")}</td>
 
-function render(list) {
-  const body = document.getElementById("rows");
-  body.innerHTML = "";
+<td class="style">${bar(s.flirty||0,max,"fill-style")}</td>
+<td class="style">${bar(s.sexual||0,max,"fill-style")}</td>
+<td class="style">${bar(s.curse||0,max,"fill-style")}</td>
 
-  list.forEach(p => {
-    const t = p.traits || {};
-    const s = p.styles || {};
-
-    body.innerHTML += `
-<tr>
-  <td class="sticky meta">${p.rank}</td>
-  <td class="sticky name meta">${p.name}</td>
-
-  <td class="stats">${p.confidence}%</td>
-  <td class="stats">${p.reputation}%</td>
-  <td class="stats">${p.gravity}%</td>
-
-  <td class="identity">${p.role}</td>
-  <td class="identity">${p.archetype}</td>
-
-  <td class="trait">${bar(t.engaging)} ${t.engaging||0}%</td>
-  <td class="trait">${bar(t.curious)} ${t.curious||0}%</td>
-  <td class="trait">${bar(t.humorous)} ${t.humorous||0}%</td>
-  <td class="trait">${bar(t.supportive)} ${t.supportive||0}%</td>
-  <td class="trait">${bar(t.dominant)} ${t.dominant||0}%</td>
-  <td class="trait">${bar(t.combative)} ${t.combative||0}%</td>
-
-  <td class="style">${bar(s.flirty,"fill-style")} ${s.flirty||0}%</td>
-  <td class="style">${bar(s.sexual,"fill-style")} ${s.sexual||0}%</td>
-  <td class="style">${bar(s.curse,"fill-style")} ${s.curse||0}%</td>
-
-  <td class="troll ${p.troll ? "bad" : ""}">
-    ${p.troll ? "⚠️" : ""}
-  </td>
+<td class="troll">${trollIcon}</td>
 </tr>`;
   });
+}
+
+function filterArch(a){
+  search.value="";
+  rows.innerHTML="";
+  draw(DATA.filter(p=>p.archetype===a),0);
+}
+
+function toggleSelect(n){
+  SELECTED.has(n)?SELECTED.delete(n):SELECTED.add(n);
+  draw(DATA.filter(p=>!COMPARE||SELECTED.has(p.name)),0);
 }
 </script>
 
