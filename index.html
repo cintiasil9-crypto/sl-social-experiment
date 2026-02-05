@@ -8,21 +8,26 @@
 <style>
 body {
   font-family: Arial, sans-serif;
-  background: #faf7f2;
+  background: #f4f6f8;
   margin: 0;
-  padding: 24px;
+  padding: 20px;
 }
 
 h1 {
   text-align: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
-input {
-  width: 100%;
-  padding: 10px;
+.controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
   margin-bottom: 14px;
-  font-size: 16px;
+}
+
+input, select {
+  padding: 8px;
+  font-size: 14px;
 }
 
 table {
@@ -33,63 +38,100 @@ table {
 
 th, td {
   border: 1px solid #ddd;
-  padding: 8px;
-  font-size: 14px;
+  padding: 6px;
+  font-size: 13px;
   text-align: left;
+  white-space: nowrap;
 }
 
 th {
-  background: #eee;
+  background: #e9ecef;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 3;
 }
 
-tr:hover {
-  background: #f3f3f3;
+/* Sticky rank + name */
+.sticky {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 2;
+}
+.sticky.name {
+  left: 40px;
+}
+
+/* Column groups */
+.meta { background: #ffffff; }
+.trait { background: #f7fbff; }
+.style { background: #fff7f7; }
+
+/* Bars */
+.bar {
+  height: 8px;
+  background: #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.fill {
+  height: 100%;
+  background: linear-gradient(90deg,#4caf50,#81c784);
 }
 
 .bad {
   color: #b00020;
   font-weight: bold;
 }
-
-.small {
-  font-size: 12px;
-  color: #555;
-}
 </style>
 </head>
 
 <body>
 
-<h1>🏆 SL Social Experiment Leaderboard</h1>
+<h1 id="title">🏆 SL Social Experiment Leaderboard</h1>
 
-<input id="search" placeholder="Search by avatar name…" />
+<div class="controls">
+  <input id="search" placeholder="Search avatar name…">
+  <select id="mode">
+    <option value="overall">Overall</option>
+
+    <option value="engaging">Most Engaging</option>
+    <option value="curious">Most Curious</option>
+    <option value="humorous">Funniest</option>
+    <option value="supportive">Most Supportive</option>
+    <option value="dominant">Most Dominant</option>
+    <option value="combative">Most Combative</option>
+
+    <option value="flirty">Most Flirty</option>
+    <option value="sexual">Most Sexual</option>
+    <option value="curse">Most Profane</option>
+  </select>
+</div>
 
 <table>
 <thead>
 <tr>
-  <th>#</th>
-  <th>Name</th>
-  <th>Confidence</th>
-  <th>Reputation</th>
-  <th>Gravity</th>
-  <th>Role</th>
-  <th>Archetype</th>
+  <th class="sticky meta">#</th>
+  <th class="sticky name meta">Name</th>
 
-  <th>Engaging</th>
-  <th>Curious</th>
-  <th>Humorous</th>
-  <th>Supportive</th>
-  <th>Dominant</th>
-  <th>Combative</th>
+  <th class="meta">Confidence</th>
+  <th class="meta">Reputation</th>
+  <th class="meta">Gravity</th>
+  <th class="meta">Role</th>
+  <th class="meta">Archetype</th>
 
-  <th>Flirty</th>
-  <th>Sexual</th>
-  <th>Curse</th>
+  <th class="trait">Engaging</th>
+  <th class="trait">Curious</th>
+  <th class="trait">Humorous</th>
+  <th class="trait">Supportive</th>
+  <th class="trait">Dominant</th>
+  <th class="trait">Combative</th>
 
-  <th>Troll</th>
+  <th class="style">Flirty</th>
+  <th class="style">Sexual</th>
+  <th class="style">Curse</th>
+
+  <th class="meta">Troll</th>
 </tr>
 </thead>
 
@@ -106,20 +148,56 @@ fetch(API)
   .then(r => r.json())
   .then(json => {
     DATA = json;
-    render(DATA);
-  })
-  .catch(() => {
-    document.getElementById("rows").innerHTML =
-      "<tr><td colspan='18'>Failed to load data</td></tr>";
+    renderOverall();
   });
 
-document.getElementById("search").addEventListener("input", e => {
-  const q = e.target.value.toLowerCase();
-  render(DATA.filter(r => r.name.toLowerCase().includes(q)));
-});
+document.getElementById("search").addEventListener("input", applyFilters);
+document.getElementById("mode").addEventListener("change", applyFilters);
 
-function pct(v) {
-  return (v ?? 0) + "%";
+function bar(v=0) {
+  return `
+    <div class="bar">
+      <div class="fill" style="width:${v}%"></div>
+    </div>
+  `;
+}
+
+function applyFilters() {
+  const q = document.getElementById("search").value.toLowerCase();
+  const mode = document.getElementById("mode").value;
+
+  let list = DATA.filter(p => p.name.toLowerCase().includes(q));
+
+  if (mode === "overall") {
+    renderOverall(list);
+  } else {
+    rankByTrait(list, mode);
+  }
+}
+
+function renderOverall(list = DATA) {
+  document.getElementById("title").innerText =
+    "🏆 SL Social Experiment Leaderboard";
+
+  render(list);
+}
+
+function rankByTrait(list, trait) {
+  document.getElementById("title").innerText =
+    "🏆 " + document.querySelector(`#mode option[value="${trait}"]`).text;
+
+  let filtered = list.filter(p =>
+    (p.traits?.[trait] || p.styles?.[trait]) > 0
+  );
+
+  filtered.sort((a,b) => {
+    const av = a.traits?.[trait] ?? a.styles?.[trait] ?? 0;
+    const bv = b.traits?.[trait] ?? b.styles?.[trait] ?? 0;
+    return bv - av;
+  });
+
+  filtered = filtered.map((p,i)=>({...p, rank:i+1}));
+  render(filtered);
 }
 
 function render(list) {
@@ -131,30 +209,31 @@ function render(list) {
     const s = p.styles || {};
 
     body.innerHTML += `
-      <tr>
-        <td>${p.rank}</td>
-        <td>${p.name}</td>
-        <td>${pct(p.confidence)}</td>
-        <td>${pct(p.reputation)}</td>
-        <td>${pct(p.gravity)}</td>
-        <td>${p.role}</td>
-        <td>${p.archetype}</td>
+<tr>
+  <td class="sticky meta">${p.rank}</td>
+  <td class="sticky name meta">${p.name}</td>
 
-        <td>${pct(t.engaging)}</td>
-        <td>${pct(t.curious)}</td>
-        <td>${pct(t.humorous)}</td>
-        <td>${pct(t.supportive)}</td>
-        <td>${pct(t.dominant)}</td>
-        <td>${pct(t.combative)}</td>
+  <td class="meta">${p.confidence}%</td>
+  <td class="meta">${p.reputation}%</td>
+  <td class="meta">${p.gravity}%</td>
+  <td class="meta">${p.role}</td>
+  <td class="meta">${p.archetype}</td>
 
-        <td>${pct(s.flirty)}</td>
-        <td>${pct(s.sexual)}</td>
-        <td>${pct(s.curse)}</td>
+  <td class="trait">${bar(t.engaging)} ${t.engaging||0}%</td>
+  <td class="trait">${bar(t.curious)} ${t.curious||0}%</td>
+  <td class="trait">${bar(t.humorous)} ${t.humorous||0}%</td>
+  <td class="trait">${bar(t.supportive)} ${t.supportive||0}%</td>
+  <td class="trait">${bar(t.dominant)} ${t.dominant||0}%</td>
+  <td class="trait">${bar(t.combative)} ${t.combative||0}%</td>
 
-        <td class="${p.troll ? "bad" : ""}">
-          ${p.troll ? "⚠️ YES" : ""}
-        </td>
-      </tr>`;
+  <td class="style">${bar(s.flirty)} ${s.flirty||0}%</td>
+  <td class="style">${bar(s.sexual)} ${s.sexual||0}%</td>
+  <td class="style">${bar(s.curse)} ${s.curse||0}%</td>
+
+  <td class="meta ${p.troll ? "bad" : ""}">
+    ${p.troll ? "⚠️" : ""}
+  </td>
+</tr>`;
   });
 }
 </script>
