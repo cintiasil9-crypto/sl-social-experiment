@@ -9,29 +9,22 @@
 body { font-family: Arial, sans-serif; background:#f4f6f8; padding:20px; }
 h1 { text-align:center; margin-bottom:12px; }
 
-.controls {
-  display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;
-}
+.controls { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
 
 input, select, button {
   padding:7px 10px; font-size:14px;
 }
-
 button {
   cursor:pointer; border:none; background:#444; color:#fff; border-radius:4px;
 }
 button:hover { background:#000; }
 button.active { background:#1976d2; }
 
-table {
-  width:100%; border-collapse:collapse; background:#fff;
-}
+table { width:100%; border-collapse:collapse; background:#fff; }
 th, td {
   border:1px solid #ddd; padding:6px; font-size:13px; white-space:nowrap;
 }
-th {
-  position:sticky; top:0; background:#fafafa; z-index:3;
-}
+th { position:sticky; top:0; background:#fafafa; z-index:3; }
 
 .sticky { position:sticky; background:#fff; z-index:2; }
 .sticky.rank { left:0; }
@@ -45,9 +38,7 @@ th {
 .energy { background:#ede7f6; }
 .risk { background:#ffebee; text-align:center; }
 
-.bar {
-  height:8px; background:#ccc; border-radius:4px; overflow:hidden;
-}
+.bar { height:8px; background:#ccc; border-radius:4px; overflow:hidden; }
 .fill-trait { height:100%; background:#66bb6a; }
 .fill-style { height:100%; background:#ec407a; }
 .fill-energy { height:100%; background:#7e57c2; }
@@ -55,13 +46,19 @@ th {
 .low-confidence { opacity:.6; font-style:italic; }
 
 .badge {
-  padding:3px 7px; border-radius:12px; font-size:11px; color:#fff;
+  display:inline-block;
+  padding:3px 7px;
+  border-radius:12px;
+  font-size:11px;
+  background:#607d8b;
+  color:#fff;
+  margin:2px 2px 0 0;
 }
-.safe { background:#2e7d32; }
-.caution { background:#f9a825; }
-.danger { background:#c62828; }
 
-/* TOOLTIP */
+.trend-up { color:#2e7d32; }
+.trend-down { color:#c62828; }
+.trend-flat { color:#777; }
+
 [data-tip] { position:relative; cursor:help; }
 [data-tip]:hover::after {
   content:attr(data-tip);
@@ -69,11 +66,11 @@ th {
   bottom:120%; left:50%; transform:translateX(-50%);
   background:#333; color:#fff;
   padding:6px 8px; border-radius:6px;
-  font-size:12px; width:220px; white-space:normal;
-  z-index:999;
+  font-size:12px; width:220px;
+  white-space:normal; z-index:999;
 }
 
-/* COMPARE PANEL */
+/* Compare */
 #comparePanel {
   display:none;
   margin-top:16px;
@@ -81,23 +78,19 @@ th {
   border:2px solid #1976d2;
   padding:12px;
 }
-#comparePanel h2 { margin-top:0; }
-
 .compare-grid {
   display:grid;
   grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
   gap:12px;
 }
-
 .card {
   border:1px solid #ddd;
   padding:10px;
   background:#fafafa;
 }
-.card h3 { margin:0 0 6px 0; }
 .small { font-size:12px; color:#666; }
 
-/* WEEKLY */
+/* Weekly */
 #weekly {
   margin-top:20px;
   background:#fff;
@@ -123,11 +116,14 @@ th {
     <option value="dominant">Dominant</option>
     <option value="combative">Combative</option>
     <option value="flirty">Flirty</option>
+    <option value="club_energy">Club Energy</option>
+    <option value="hangout_energy">Hangout Energy</option>
     <option value="risk">Risk</option>
+    <option value="confidence">Confidence</option>
   </select>
 
   <button id="compareBtn">Compare</button>
-  <button id="clearBtn">Clear Compare</button>
+  <button id="clearBtn">Clear</button>
 </div>
 
 <table>
@@ -137,16 +133,16 @@ th {
   <th class="sticky check">✓</th>
   <th class="sticky name">Name</th>
 
-  <th class="meta" data-tip="How much data we have">Confidence</th>
-  <th class="meta" data-tip="Current energy (last ~45 min)">Vibe</th>
+  <th class="meta">Confidence</th>
+  <th class="meta">Vibe</th>
   <th class="summary">Summary</th>
 
-  <th class="trait" data-tip="Conversation pull">Engaging</th>
-  <th class="trait" data-tip="Questions & curiosity">Curious</th>
-  <th class="trait" data-tip="Jokes & playfulness">Humorous</th>
-  <th class="trait" data-tip="Empathy & reassurance">Supportive</th>
-  <th class="trait" data-tip="Presence & commands">Dominant</th>
-  <th class="trait" data-tip="Confrontation">Combative</th>
+  <th class="trait">Engaging</th>
+  <th class="trait">Curious</th>
+  <th class="trait">Humorous</th>
+  <th class="trait">Supportive</th>
+  <th class="trait">Dominant</th>
+  <th class="trait">Combative</th>
 
   <th class="style">Flirty</th>
   <th class="style">Sexual</th>
@@ -154,20 +150,17 @@ th {
 
   <th class="energy">Club</th>
   <th class="energy">Hangout</th>
-
   <th class="risk">Risk</th>
 </tr>
 </thead>
 <tbody id="rows"></tbody>
 </table>
 
-<!-- COMPARE PANEL -->
 <div id="comparePanel">
   <h2>🔍 Compare Avatars</h2>
   <div class="compare-grid" id="compareGrid"></div>
 </div>
 
-<!-- WEEKLY -->
 <div id="weekly">
   <h2>🏅 Weekly Standouts</h2>
   <div id="weeklyContent"></div>
@@ -176,50 +169,64 @@ th {
 <script>
 const API = "https://sl-gpt-relay.onrender.com/leaderboard";
 let DATA=[], MODE="overall", COMPARE=false;
-let SELECTED = new Set();
+let SELECTED=new Set();
+
+const SNAP_KEY="sl_trend_snapshot";
 
 fetch(API).then(r=>r.json()).then(d=>{
   DATA=d;
+  applyTrends();
   render();
   renderWeekly();
+  saveSnapshot();
 });
 
-search.oninput = render;
-mode.onchange = e=>{ MODE=e.target.value; render(); };
+search.oninput=render;
+mode.onchange=e=>{ MODE=e.target.value; render(); };
 
-compareBtn.onclick = ()=>{
+compareBtn.onclick=()=>{
   COMPARE=!COMPARE;
   compareBtn.classList.toggle("active",COMPARE);
-  document.getElementById("comparePanel").style.display = COMPARE ? "block" : "none";
+  comparePanel.style.display=COMPARE?"block":"none";
   render();
 };
 
-clearBtn.onclick = ()=>{
+clearBtn.onclick=()=>{
   SELECTED.clear();
   render();
 };
 
-function bar(v,cls){
-  return `<div class="bar"><div class="${cls}" style="width:${v||0}%"></div></div>${v||0}%`;
+function score(p,mode){
+  if(p.traits?.[mode]!=null) return p.traits[mode];
+  if(p.styles?.[mode]!=null) return p.styles[mode];
+  if(p[mode]!=null) return p[mode];
+  return 0;
 }
-function riskBadge(v){
-  if(v>65) return `<span class="badge danger">Chaos</span>`;
-  if(v>35) return `<span class="badge caution">Spicy</span>`;
-  return `<span class="badge safe">Chill</span>`;
+
+function bar(v,cls){
+  v=Math.round(v||0);
+  return `<div class="bar"><div class="${cls}" style="width:${v}%"></div></div>${v}%`;
+}
+
+function trendIcon(v){
+  if(v>1) return `<span class="trend-up">⬆</span>`;
+  if(v<-1) return `<span class="trend-down">⬇</span>`;
+  return `<span class="trend-flat">→</span>`;
 }
 
 function render(){
   let q=search.value.toLowerCase();
   let list=DATA.filter(p=>p.name.toLowerCase().includes(q));
 
-  if (MODE!=="overall") {
-    list=list.sort((a,b)=>((b.traits?.[MODE]??b[MODE]??0)-(a.traits?.[MODE]??a[MODE]??0)));
+  if(MODE!=="overall"){
+    list.sort((a,b)=>score(b,MODE)-score(a,MODE));
   }
 
   rows.innerHTML="";
   list.forEach((p,i)=>{
     let t=p.traits||{}, s=p.styles||{};
     let fade=p.confidence<25?"low-confidence":"";
+    let vibe=p.vibe+(p.live?` · ${p.live}`:"");
 
     rows.innerHTML+=`
 <tr class="${fade}">
@@ -233,15 +240,19 @@ onchange="toggleSelect('${p.name}')">
 <td class="sticky name">${p.name}</td>
 
 <td class="meta">${p.confidence}%</td>
-<td class="meta">${p.vibe}</td>
-<td class="summary">${p.summary}</td>
+<td class="meta">${vibe}</td>
 
-<td class="trait">${bar(t.engaging,"fill-trait")}</td>
-<td class="trait">${bar(t.curious,"fill-trait")}</td>
-<td class="trait">${bar(t.humorous,"fill-trait")}</td>
-<td class="trait">${bar(t.supportive,"fill-trait")}</td>
-<td class="trait">${bar(t.dominant,"fill-trait")}</td>
-<td class="trait">${bar(t.combative,"fill-trait")}</td>
+<td class="summary">
+${p.summary}
+<div>${(p.badges||[]).map(b=>`<span class="badge">${b}</span>`).join("")}</div>
+</td>
+
+<td class="trait">${bar(t.engaging,"fill-trait")} ${trendIcon(p.trends?.engaging)}</td>
+<td class="trait">${bar(t.curious,"fill-trait")} ${trendIcon(p.trends?.curious)}</td>
+<td class="trait">${bar(t.humorous,"fill-trait")} ${trendIcon(p.trends?.humorous)}</td>
+<td class="trait">${bar(t.supportive,"fill-trait")} ${trendIcon(p.trends?.supportive)}</td>
+<td class="trait">${bar(t.dominant,"fill-trait")} ${trendIcon(p.trends?.dominant)}</td>
+<td class="trait">${bar(t.combative,"fill-trait")} ${trendIcon(p.trends?.combative)}</td>
 
 <td class="style">${bar(s.flirty,"fill-style")}</td>
 <td class="style">${bar(s.sexual,"fill-style")}</td>
@@ -249,47 +260,60 @@ onchange="toggleSelect('${p.name}')">
 
 <td class="energy">${bar(p.club_energy,"fill-energy")}</td>
 <td class="energy">${bar(p.hangout_energy,"fill-energy")}</td>
-
-<td class="risk">${riskBadge(p.risk)}</td>
+<td class="risk">${p.risk}</td>
 </tr>`;
   });
 
   renderCompare();
 }
 
-function toggleSelect(name){
-  if(SELECTED.has(name)) SELECTED.delete(name);
-  else if(SELECTED.size<4) SELECTED.add(name);
+function toggleSelect(n){
+  if(SELECTED.has(n)) SELECTED.delete(n);
+  else if(SELECTED.size<4) SELECTED.add(n);
   render();
 }
 
 function renderCompare(){
-  if(!COMPARE) return;
-  let grid=document.getElementById("compareGrid");
-  grid.innerHTML="";
+  if(!COMPARE){
+    compareGrid.innerHTML="<div class='small'>Select up to 4 avatars to compare.</div>";
+    return;
+  }
+  compareGrid.innerHTML="";
   DATA.filter(p=>SELECTED.has(p.name)).forEach(p=>{
-    grid.innerHTML+=`
+    compareGrid.innerHTML+=`
 <div class="card">
 <h3>${p.name}</h3>
 <div class="small">${p.summary}</div>
 <div><b>Vibe:</b> ${p.vibe}</div>
-<div><b>Risk:</b> ${riskBadge(p.risk)}</div>
-<div><b>Engaging</b>${bar(p.traits.engaging,"fill-trait")}</div>
-<div><b>Humorous</b>${bar(p.traits.humorous,"fill-trait")}</div>
-<div><b>Supportive</b>${bar(p.traits.supportive,"fill-trait")}</div>
-<div><b>Dominant</b>${bar(p.traits.dominant,"fill-trait")}</div>
+<div><b>Risk:</b> ${p.risk}</div>
 </div>`;
   });
 }
 
 function renderWeekly(){
-  let top=(trait)=>DATA.reduce((a,b)=>b.traits[trait]>a.traits[trait]?b:a);
+  const top=t=>DATA.reduce((a,b)=>b.traits[t]>a.traits[t]?b:a);
   weeklyContent.innerHTML=`
-🏆 Most Engaging: <b>${top("engaging").name}</b><br>
 🎤 Funniest: <b>${top("humorous").name}</b><br>
 🫂 Comfort Avatar: <b>${top("supportive").name}</b><br>
-😈 Chaos Potential: <b>${DATA.reduce((a,b)=>b.risk>a.risk?b:a).name}</b>
+🎭 Social Magnet: <b>${top("engaging").name}</b>
 `;
+}
+
+function saveSnapshot(){
+  let snap={};
+  DATA.forEach(p=>snap[p.name]=p.traits);
+  localStorage.setItem(SNAP_KEY,JSON.stringify(snap));
+}
+
+function applyTrends(){
+  let prev=JSON.parse(localStorage.getItem(SNAP_KEY)||"{}");
+  DATA.forEach(p=>{
+    p.trends={};
+    let old=prev[p.name]||{};
+    for(let k in p.traits){
+      p.trends[k]=(p.traits[k]||0)-(old[k]||0);
+    }
+  });
 }
 </script>
 
