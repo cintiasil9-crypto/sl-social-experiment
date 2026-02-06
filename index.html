@@ -12,87 +12,97 @@ body {
   padding: 20px;
 }
 
-h1 { text-align:center; margin-bottom:8px; }
+/* ===== HEAD ===== */
+h1 {
+  text-align: center;
+  margin-bottom: 8px;
+}
 
+/* ===== CONTROLS ===== */
 .controls, .lens {
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-bottom:12px;
-  align-items:center;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  align-items: center;
 }
 
 input, select, button {
-  padding:7px 10px;
-  font-size:14px;
+  padding: 7px 10px;
+  font-size: 14px;
 }
 
 button {
-  cursor:pointer;
-  border:none;
-  background:#444;
-  color:#fff;
-  border-radius:4px;
+  cursor: pointer;
+  border: none;
+  background: #444;
+  color: #fff;
+  border-radius: 4px;
 }
 button:hover { background:#000; }
 
-.lens button { background:#607d8b; }
-.lens button:hover { background:#37474f; }
+.lens button {
+  background:#607d8b;
+}
+.lens button:hover {
+  background:#37474f;
+}
 
 #backBtn { display:none; background:#1976d2; }
 #compareToggle { background:#6a1b9a; }
 
+/* ===== TABLE ===== */
 table {
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
 }
 
 th, td {
-  border:1px solid #ddd;
-  padding:6px;
-  font-size:13px;
-  white-space:nowrap;
+  border: 1px solid #ddd;
+  padding: 6px;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 th {
-  position:sticky;
-  top:0;
-  z-index:3;
+  position: sticky;
+  top: 0;
+  z-index: 3;
 }
 
-/* sticky columns */
-.sticky { position:sticky; background:#fff; z-index:2; }
+/* Sticky columns */
+.sticky { position: sticky; background:#fff; z-index:2; }
 .sticky.rank { left:0; }
 .sticky.name { left:40px; }
 .sticky.role { left:240px; }
 
-/* column groups */
+/* Column groups */
 .stats { background:#e3f2fd; }
 .identity { background:#ede7f6; cursor:pointer; }
 .trait { background:#e8f5e9; }
 .style { background:#fce4ec; }
 .troll { background:#ffebee; text-align:center; }
 
-/* bars */
+/* Bars */
 .bar {
-  height:8px;
-  background:#ccc;
-  border-radius:4px;
-  overflow:hidden;
+  height: 8px;
+  background: #ccc;
+  border-radius: 4px;
+  overflow: hidden;
 }
 .fill-trait {
   height:100%;
-  background:linear-gradient(90deg,#43a047,#81c784);
+  background: linear-gradient(90deg,#43a047,#81c784);
 }
 .fill-style {
   height:100%;
-  background:linear-gradient(90deg,#d81b60,#f48fb1);
+  background: linear-gradient(90deg,#d81b60,#f48fb1);
 }
 
-/* states */
-.forming { opacity:0.7; font-style:italic; }
-.selected { outline:3px solid #ff9800; }
+/* States */
+.forming { opacity:0.75; font-style:italic; }
+.selected { outline: 3px solid #ff9800; }
 </style>
 </head>
 
@@ -102,7 +112,6 @@ th {
 
 <div class="controls">
   <input id="search" placeholder="Search avatar…">
-
   <select id="mode">
     <option value="overall">Overall</option>
     <option value="engaging">Engaging</option>
@@ -132,14 +141,15 @@ th {
 <table>
 <thead>
 <tr>
-  <th class="sticky rank">#</th>
-  <th class="sticky name">Name</th>
+  <th class="sticky rank" title="Leaderboard rank">#</th>
+  <th class="sticky name" title="Avatar name">Name</th>
 
-  <th class="stats">Confidence</th>
-  <th class="stats">Reputation</th>
+  <th class="stats" title="How much data we have">Confidence</th>
+  <th class="stats" title="Net positive social signal">Reputation</th>
+  <th class="stats" title="How much others respond to you">Gravity</th>
 
-  <th class="sticky role identity">Role</th>
-  <th class="identity">Archetype</th>
+  <th class="sticky role identity" title="Participation style">Role</th>
+  <th class="identity" title="Dominant social pattern">Archetype</th>
 
   <th class="trait">Engaging</th>
   <th class="trait">Curious</th>
@@ -152,7 +162,7 @@ th {
   <th class="style">Sexual</th>
   <th class="style">Curse</th>
 
-  <th class="troll">Troll</th>
+  <th class="troll" title="Disruptive behavior pattern">Troll</th>
 </tr>
 </thead>
 <tbody id="rows"></tbody>
@@ -160,53 +170,36 @@ th {
 
 <script>
 const API = "https://sl-gpt-relay.onrender.com/leaderboard";
+let DATA=[], MODE="overall", COMPARE=false, SELECTED=new Set();
 
-let DATA = [];
-let MODE = "overall";
-let COMPARE = false;
-let SELECTED = new Set();
-
-fetch(API)
-  .then(r => r.json())
-  .then(d => { DATA = d; render(); });
+fetch(API).then(r=>r.json()).then(d=>{DATA=d; render();});
 
 search.oninput = render;
-mode.onchange = e => setMode(e.target.value);
-backBtn.onclick = () => setMode("overall");
-compareToggle.onclick = () => { COMPARE = !COMPARE; render(); };
+mode.onchange = e=>setMode(e.target.value);
+backBtn.onclick = ()=>setMode("overall");
+compareToggle.onclick = ()=>{COMPARE=!COMPARE; render();};
 
 function setMode(m){
-  MODE = m;
-  mode.value = m;
-  backBtn.style.display = m === "overall" ? "none" : "inline-block";
-  title.innerText = m === "overall"
-    ? "🏆 SL Social Experiment Leaderboard"
-    : "🏆 " + m.toUpperCase();
+  MODE=m;
+  mode.value=m;
+  backBtn.style.display = m==="overall"?"none":"inline-block";
+  title.innerText = m==="overall" ? "🏆 SL Social Experiment Leaderboard" : "🏆 "+m.toUpperCase();
   render();
 }
 
 function bar(v,max,cls){
-  let pct = max ? Math.round((v/max)*100) : 0;
+  let pct = max? Math.round((v/max)*100):0;
   return `<div class="bar"><div class="${cls}" style="width:${pct}%"></div></div>${pct}%`;
 }
 
 function render(){
   let q = search.value.toLowerCase();
-  let list = DATA.filter(p => p.name.toLowerCase().includes(q));
+  let list = DATA.filter(p=>p.name.toLowerCase().includes(q));
 
-  if (MODE !== "overall" && MODE !== "troll"){
-    let max = Math.max(
-      ...list.map(p => p.traits?.[MODE] ?? p.modifiers?.[MODE] ?? 0),
-      1
-    );
-
-    list = list
-      .filter(p => (p.traits?.[MODE] ?? p.modifiers?.[MODE]) > 0)
-      .sort((a,b) =>
-        (b.traits?.[MODE] ?? b.modifiers?.[MODE]) -
-        (a.traits?.[MODE] ?? a.modifiers?.[MODE])
-      );
-
+  if (MODE!=="overall" && MODE!=="troll"){
+    let max = Math.max(...list.map(p=>p.traits?.[MODE]||p.styles?.[MODE]||0),1);
+    list = list.filter(p=>(p.traits?.[MODE]||p.styles?.[MODE])>0)
+               .sort((a,b)=>(b.traits?.[MODE]||b.styles?.[MODE])-(a.traits?.[MODE]||a.styles?.[MODE]));
     draw(list,max);
   } else {
     draw(list,0);
@@ -214,20 +207,21 @@ function render(){
 }
 
 function draw(list,max){
-  rows.innerHTML = "";
+  rows.innerHTML="";
   list.forEach((p,i)=>{
-    let t = p.traits || {};
-    let s = p.modifiers || {};
-    let trollIcon = p.troll ? "🔴" : "🟢";
+    let t=p.traits||{}, s=p.styles||{};
+    let troll = p.troll_score||0;
+    let trollIcon = troll>0.7?"🔴":troll>0.4?"🟡":"🟢";
 
-    rows.innerHTML += `
-<tr class="${p.archetype === "Profile forming" ? "forming" : ""} ${SELECTED.has(p.name) ? "selected" : ""}"
-${COMPARE ? `onclick="toggleSelect('${p.name}')"` : ""}>
+    rows.innerHTML+=`
+<tr class="${p.archetype==="Profile forming"?"forming":""} ${SELECTED.has(p.name)?"selected":""}"
+onclick="${COMPARE?`toggleSelect('${p.name}')`:""}">
 <td class="sticky rank">${i+1}</td>
 <td class="sticky name">${p.name}</td>
 
 <td class="stats">${p.confidence}%</td>
 <td class="stats">${p.reputation}%</td>
+<td class="stats">${p.gravity}%</td>
 
 <td class="sticky role identity">${p.role}</td>
 <td class="identity" onclick="filterArch('${p.archetype}')">${p.archetype}</td>
@@ -249,13 +243,14 @@ ${COMPARE ? `onclick="toggleSelect('${p.name}')"` : ""}>
 }
 
 function filterArch(a){
-  search.value = "";
-  draw(DATA.filter(p => p.archetype === a), 0);
+  search.value="";
+  rows.innerHTML="";
+  draw(DATA.filter(p=>p.archetype===a),0);
 }
 
 function toggleSelect(n){
-  SELECTED.has(n) ? SELECTED.delete(n) : SELECTED.add(n);
-  draw(DATA.filter(p => !COMPARE || SELECTED.has(p.name)), 0);
+  SELECTED.has(n)?SELECTED.delete(n):SELECTED.add(n);
+  draw(DATA.filter(p=>!COMPARE||SELECTED.has(p.name)),0);
 }
 </script>
 
