@@ -6,132 +6,104 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
-  padding: 20px;
-}
+body { font-family: Arial, sans-serif; background:#f4f6f8; padding:20px; }
+h1 { text-align:center; margin-bottom:12px; }
 
-h1 {
-  text-align: center;
-  margin-bottom: 12px;
-}
-
-/* ===== CONTROLS ===== */
 .controls {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
+  display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;
 }
 
-input, select {
-  padding: 7px 10px;
-  font-size: 14px;
+input, select, button {
+  padding:7px 10px; font-size:14px;
 }
 
-/* ===== TABLE ===== */
+button {
+  cursor:pointer; border:none; background:#444; color:#fff; border-radius:4px;
+}
+button:hover { background:#000; }
+button.active { background:#1976d2; }
+
 table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #fff;
+  width:100%; border-collapse:collapse; background:#fff;
 }
-
 th, td {
-  border: 1px solid #ddd;
-  padding: 6px;
-  font-size: 13px;
-  white-space: nowrap;
+  border:1px solid #ddd; padding:6px; font-size:13px; white-space:nowrap;
 }
-
 th {
-  position: sticky;
-  top: 0;
-  background: #fafafa;
-  z-index: 3;
+  position:sticky; top:0; background:#fafafa; z-index:3;
 }
 
-/* Sticky columns */
-.sticky { position: sticky; background:#fff; z-index:2; }
+.sticky { position:sticky; background:#fff; z-index:2; }
 .sticky.rank { left:0; }
-.sticky.name { left:40px; }
+.sticky.check { left:36px; }
+.sticky.name { left:76px; }
 
-/* Coloring */
 .meta { background:#e3f2fd; }
-.summary { background:#fffde7; max-width:260px; white-space:normal; }
+.summary { background:#fffde7; white-space:normal; max-width:260px; }
 .trait { background:#e8f5e9; }
 .style { background:#fce4ec; }
 .energy { background:#ede7f6; }
 .risk { background:#ffebee; text-align:center; }
 
-/* Bars */
 .bar {
-  height: 8px;
-  background: #ccc;
-  border-radius: 4px;
-  overflow: hidden;
+  height:8px; background:#ccc; border-radius:4px; overflow:hidden;
 }
-.fill-trait { background:#66bb6a; height:100%; }
-.fill-style { background:#ec407a; height:100%; }
-.fill-energy { background:#7e57c2; height:100%; }
+.fill-trait { height:100%; background:#66bb6a; }
+.fill-style { height:100%; background:#ec407a; }
+.fill-energy { height:100%; background:#7e57c2; }
 
-/* Tooltips */
-[data-tip] {
-  position: relative;
-  cursor: help;
-}
-[data-tip]:hover::after {
-  content: attr(data-tip);
-  position: absolute;
-  bottom: 125%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #333;
-  color: #fff;
-  padding: 6px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  white-space: normal;
-  width: 220px;
-  z-index: 999;
-}
+.low-confidence { opacity:.6; font-style:italic; }
 
-/* Confidence fade */
-.low-confidence { opacity:0.65; font-style:italic; }
-
-/* Risk badges */
 .badge {
-  padding: 3px 7px;
-  border-radius: 12px;
-  font-size: 11px;
-  color:#fff;
+  padding:3px 7px; border-radius:12px; font-size:11px; color:#fff;
 }
 .safe { background:#2e7d32; }
 .caution { background:#f9a825; }
 .danger { background:#c62828; }
 
-/* ===== PROFILE MODAL ===== */
-#profile {
-  position: fixed;
-  top:0; right:-420px;
-  width: 380px;
-  height:100%;
+/* TOOLTIP */
+[data-tip] { position:relative; cursor:help; }
+[data-tip]:hover::after {
+  content:attr(data-tip);
+  position:absolute;
+  bottom:120%; left:50%; transform:translateX(-50%);
+  background:#333; color:#fff;
+  padding:6px 8px; border-radius:6px;
+  font-size:12px; width:220px; white-space:normal;
+  z-index:999;
+}
+
+/* COMPARE PANEL */
+#comparePanel {
+  display:none;
+  margin-top:16px;
   background:#fff;
-  box-shadow:-3px 0 12px rgba(0,0,0,.3);
-  padding:16px;
-  transition:.3s;
-  overflow:auto;
-  z-index:9999;
+  border:2px solid #1976d2;
+  padding:12px;
 }
-#profile.open { right:0; }
-#profile h2 { margin-top:0; }
-.close {
-  float:right;
-  cursor:pointer;
-  font-size:18px;
+#comparePanel h2 { margin-top:0; }
+
+.compare-grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+  gap:12px;
 }
-.section { margin-bottom:12px; }
+
+.card {
+  border:1px solid #ddd;
+  padding:10px;
+  background:#fafafa;
+}
+.card h3 { margin:0 0 6px 0; }
 .small { font-size:12px; color:#666; }
+
+/* WEEKLY */
+#weekly {
+  margin-top:20px;
+  background:#fff;
+  padding:12px;
+  border:1px solid #ddd;
+}
 </style>
 </head>
 
@@ -141,63 +113,95 @@ th {
 
 <div class="controls">
   <input id="search" placeholder="Search avatar…">
+
   <select id="mode">
     <option value="overall">Overall</option>
     <option value="engaging">Engaging</option>
+    <option value="curious">Curious</option>
     <option value="humorous">Humorous</option>
     <option value="supportive">Supportive</option>
     <option value="dominant">Dominant</option>
+    <option value="combative">Combative</option>
     <option value="flirty">Flirty</option>
+    <option value="risk">Risk</option>
   </select>
+
+  <button id="compareBtn">Compare</button>
+  <button id="clearBtn">Clear Compare</button>
 </div>
 
 <table>
 <thead>
 <tr>
   <th class="sticky rank">#</th>
+  <th class="sticky check">✓</th>
   <th class="sticky name">Name</th>
-  <th class="meta" data-tip="How much data we have on this avatar">Confidence</th>
+
+  <th class="meta" data-tip="How much data we have">Confidence</th>
+  <th class="meta" data-tip="Current energy (last ~45 min)">Vibe</th>
   <th class="summary">Summary</th>
 
-  <th class="trait" data-tip="Conversation pull & social momentum">Engaging</th>
-  <th class="trait" data-tip="Questions, curiosity, exploration">Curious</th>
-  <th class="trait" data-tip="Jokes, laughter, playful tone">Humorous</th>
+  <th class="trait" data-tip="Conversation pull">Engaging</th>
+  <th class="trait" data-tip="Questions & curiosity">Curious</th>
+  <th class="trait" data-tip="Jokes & playfulness">Humorous</th>
   <th class="trait" data-tip="Empathy & reassurance">Supportive</th>
-  <th class="trait" data-tip="Commands, presence, control">Dominant</th>
-  <th class="trait" data-tip="Confrontation & edge">Combative</th>
+  <th class="trait" data-tip="Presence & commands">Dominant</th>
+  <th class="trait" data-tip="Confrontation">Combative</th>
 
-  <th class="style" data-tip="Playful flirt energy">Flirty</th>
-  <th class="style" data-tip="Explicit language">Sexual</th>
-  <th class="style" data-tip="Swearing intensity">Curse</th>
+  <th class="style">Flirty</th>
+  <th class="style">Sexual</th>
+  <th class="style">Curse</th>
 
-  <th class="energy" data-tip="High-energy social environments">Club</th>
-  <th class="energy" data-tip="Low-pressure conversation spaces">Hangout</th>
+  <th class="energy">Club</th>
+  <th class="energy">Hangout</th>
 
-  <th class="risk" data-tip="Likelihood of drama or disruption">Risk</th>
+  <th class="risk">Risk</th>
 </tr>
 </thead>
 <tbody id="rows"></tbody>
 </table>
 
-<!-- PROFILE PANEL -->
-<div id="profile">
-  <span class="close" onclick="closeProfile()">✖</span>
-  <div id="profileContent"></div>
+<!-- COMPARE PANEL -->
+<div id="comparePanel">
+  <h2>🔍 Compare Avatars</h2>
+  <div class="compare-grid" id="compareGrid"></div>
+</div>
+
+<!-- WEEKLY -->
+<div id="weekly">
+  <h2>🏅 Weekly Standouts</h2>
+  <div id="weeklyContent"></div>
 </div>
 
 <script>
 const API = "https://sl-gpt-relay.onrender.com/leaderboard";
-let DATA=[], MODE="overall";
+let DATA=[], MODE="overall", COMPARE=false;
+let SELECTED = new Set();
 
-fetch(API).then(r=>r.json()).then(d=>{ DATA=d; render(); });
+fetch(API).then(r=>r.json()).then(d=>{
+  DATA=d;
+  render();
+  renderWeekly();
+});
 
 search.oninput = render;
 mode.onchange = e=>{ MODE=e.target.value; render(); };
 
+compareBtn.onclick = ()=>{
+  COMPARE=!COMPARE;
+  compareBtn.classList.toggle("active",COMPARE);
+  document.getElementById("comparePanel").style.display = COMPARE ? "block" : "none";
+  render();
+};
+
+clearBtn.onclick = ()=>{
+  SELECTED.clear();
+  render();
+};
+
 function bar(v,cls){
   return `<div class="bar"><div class="${cls}" style="width:${v||0}%"></div></div>${v||0}%`;
 }
-
 function riskBadge(v){
   if(v>65) return `<span class="badge danger">Chaos</span>`;
   if(v>35) return `<span class="badge caution">Spicy</span>`;
@@ -205,20 +209,32 @@ function riskBadge(v){
 }
 
 function render(){
-  let q = search.value.toLowerCase();
-  let list = DATA.filter(p=>p.name.toLowerCase().includes(q));
+  let q=search.value.toLowerCase();
+  let list=DATA.filter(p=>p.name.toLowerCase().includes(q));
+
+  if (MODE!=="overall") {
+    list=list.sort((a,b)=>((b.traits?.[MODE]??b[MODE]??0)-(a.traits?.[MODE]??a[MODE]??0)));
+  }
 
   rows.innerHTML="";
-  list.forEach(p=>{
+  list.forEach((p,i)=>{
     let t=p.traits||{}, s=p.styles||{};
     let fade=p.confidence<25?"low-confidence":"";
 
     rows.innerHTML+=`
 <tr class="${fade}">
-<td class="sticky rank">${p.rank}</td>
-<td class="sticky name"><a href="#" onclick='openProfile(${JSON.stringify(p).replace(/'/g,"&apos;")})'>${p.name}</a></td>
+<td class="sticky rank">${i+1}</td>
+<td class="sticky check">
+<input type="checkbox"
+${SELECTED.has(p.name)?"checked":""}
+${SELECTED.size>=4&&!SELECTED.has(p.name)?"disabled":""}
+onchange="toggleSelect('${p.name}')">
+</td>
+<td class="sticky name">${p.name}</td>
+
 <td class="meta">${p.confidence}%</td>
-<td class="summary">${p.summary||"—"}</td>
+<td class="meta">${p.vibe}</td>
+<td class="summary">${p.summary}</td>
 
 <td class="trait">${bar(t.engaging,"fill-trait")}</td>
 <td class="trait">${bar(t.curious,"fill-trait")}</td>
@@ -237,21 +253,43 @@ function render(){
 <td class="risk">${riskBadge(p.risk)}</td>
 </tr>`;
   });
+
+  renderCompare();
 }
 
-function openProfile(p){
-  profile.classList.add("open");
-  profileContent.innerHTML=`
-<h2>${p.name}</h2>
-<div class="section"><b>Summary</b><br>${p.summary}</div>
-<div class="section"><b>Vibe right now</b><br>${p.vibe}</div>
-<div class="section"><b>Confidence</b>: ${p.confidence}%</div>
-<div class="section"><b>Risk</b>: ${riskBadge(p.risk)}</div>
-<div class="section small">Scores stabilize as more data is observed.</div>`;
+function toggleSelect(name){
+  if(SELECTED.has(name)) SELECTED.delete(name);
+  else if(SELECTED.size<4) SELECTED.add(name);
+  render();
 }
 
-function closeProfile(){
-  profile.classList.remove("open");
+function renderCompare(){
+  if(!COMPARE) return;
+  let grid=document.getElementById("compareGrid");
+  grid.innerHTML="";
+  DATA.filter(p=>SELECTED.has(p.name)).forEach(p=>{
+    grid.innerHTML+=`
+<div class="card">
+<h3>${p.name}</h3>
+<div class="small">${p.summary}</div>
+<div><b>Vibe:</b> ${p.vibe}</div>
+<div><b>Risk:</b> ${riskBadge(p.risk)}</div>
+<div><b>Engaging</b>${bar(p.traits.engaging,"fill-trait")}</div>
+<div><b>Humorous</b>${bar(p.traits.humorous,"fill-trait")}</div>
+<div><b>Supportive</b>${bar(p.traits.supportive,"fill-trait")}</div>
+<div><b>Dominant</b>${bar(p.traits.dominant,"fill-trait")}</div>
+</div>`;
+  });
+}
+
+function renderWeekly(){
+  let top=(trait)=>DATA.reduce((a,b)=>b.traits[trait]>a.traits[trait]?b:a);
+  weeklyContent.innerHTML=`
+🏆 Most Engaging: <b>${top("engaging").name}</b><br>
+🎤 Funniest: <b>${top("humorous").name}</b><br>
+🫂 Comfort Avatar: <b>${top("supportive").name}</b><br>
+😈 Chaos Potential: <b>${DATA.reduce((a,b)=>b.risk>a.risk?b:a).name}</b>
+`;
 }
 </script>
 
